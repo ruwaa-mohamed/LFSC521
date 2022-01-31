@@ -1,0 +1,50 @@
+---
+title: "Module I"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Downloading Sample Data
+
+For the purpose of only trying the `tidyverse` R package, sample data of **PheWAS of GWAS Catalog of SNPs** was downloaded from **eMERGE** databases. The downloaded data can be found here: 
+
+<https://phewascatalog.org/files/phewas-catalog.csv.zip>. 
+
+The downloaded file was unzipped to get the CSV file.
+
+### Importing the `tidyverse` Library
+
+```{r}
+library(tidyverse)
+```
+
+### Load the Data
+
+```{r}
+df <- read.csv("phewas-catalog.csv")
+head(df)
+```
+
+```{r}
+colnames(df)
+```
+
+### Data Analysis
+(involve split-apply-combine approach)
+
+```{r}
+str(df)
+```
+
+
+### Including Some Plots
+(include a plot or two made with ggplot2)
+
+
+```{r, echo=FALSE}
+
+```
+
