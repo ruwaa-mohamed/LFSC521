@@ -19,18 +19,16 @@ The downloaded file was unzipped to get the CSV file.
 
 ```{r}
 library(tidyverse)
+library(viridis)
 ```
 
 ### Load the Data
 
-```{r}
+```{r, layout="l-body-outset"}
 df <- read.csv("phewas-catalog.csv")
 head(df)
 ```
 
-```{r}
-colnames(df)
-```
 
 ### Data Analysis
 (involve split-apply-combine approach)
@@ -39,12 +37,123 @@ colnames(df)
 str(df)
 ```
 
+Splitting the chromosome column to chromosome and position columns for better grouping of the SNPs.
+```{r, warning=FALSE}
+df2 <- df %>% separate(chromosome, c("chr", "pos"))
+head(df2)
+```
+
+```{r}
+str(df2)
+```
+
+Let's adjust the data types of the columns
+
+```{r}
+df2$chr <- as.factor(df2$chr)
+df2$pos <- as.numeric(df2$pos)
+df2$phewas.code <- as.character(df2$phewas.code)
+# df2$gwas.associations <- as.character(df2$gwas.associations)
+str(df2)
+```
+
+Let's group by chromosome and count the number of occurrences of each phenotype/disease.
+```{r}
+# group_by(df2, chr)
+chr.phe <- df2 %>% 
+  group_by(chr) %>%
+  count(phewas.phenotype)
+head(chr.phe)
+```
+Let's do the opposite this time: group by phenotype/diseases and count the number of occurrences of each chromosome.
+```{r}
+# group_by(df2, chr)
+phe.chr <- df2 %>% 
+  group_by(phewas.phenotype) %>%
+  count(chr)
+head(phe.chr)
+```
+How is that differemt from grouping by both the chromosome number and the phenotype/disease and counting the SNPs? Should the SNPs be unique (all the counts = 1)?
+```{r}
+# group_by(df2, chr)
+chr.phe.snp <- df2 %>% 
+  group_by(chr, phewas.phenotype) %>%
+  count(snp)
+table(chr.phe.snp$n)
+```
+It's seems that 237 are duplicated per chromosome per phenotype. Why is that? 
+
+**split-apply-combine**
+```{r, warning=FALSE}
+sac.1 <-df2 %>% 
+  group_by(chr, phewas.phenotype) %>% 
+  count(snp) %>% 
+  spread(phewas.phenotype, n)
+head(sac.1)
+```
+That yielded a sparse matrix. Let's try something different.
+
+```{r, warning=FALSE}
+sac.2 <-df2 %>% 
+  group_by(phewas.phenotype) %>% 
+  count(chr) %>% 
+  spread(phewas.phenotype, n) %>% 
+  replace(is.na(.), 0)
+head(sac.2)
+```
+This is a very useful one! The output is a matrix where we now the number of SNPs (better said as observations because IDK the reason behind the duplicates detected earlier yet) per chromosome per phenotype. 
+
+Let's take a closer look at Parkinson's Disease
+
+```{r}
+parkinson <- sac.2 %>% select("chr", "Parkinson's disease")
+parkinson
+```
+
 
 ### Including Some Plots
 (include a plot or two made with ggplot2)
 
 
 ```{r, echo=FALSE}
-
+# g <- df2[df2$phewas.phenotype == "Parkinson's disease",]
+g <- as.data.frame(parkinson)
+colnames(g) <- c("chr", "observations")
+g$chr <- as.factor(g$chr)
+ggplot(g, aes(x=chr , y=observations)) +
+  geom_bar(stat="identity")
 ```
 
+Let's re-aarnge the bars.
+
+```{r}
+as.data.frame(parkinson) %>%
+  mutate(chr = fct_relevel(chr, 
+                           "1", "2", "3", "4", "5", "6", "7",
+                           "8", "9", "10", "11", "12", "13",
+                           "14", "15", "16", "17", "18", "19",
+                           "20", "21", "22", "X")) %>%
+  ggplot( aes(x=chr, y=`Parkinson's disease`)) +
+  geom_bar(stat="identity")
+```
+
+We can claim that chromosome 6 has a lot of regions that are related to Parkinson's disease. A better study of the phenotype should consider the number of cases per each location not only the number of locations. 
+
+A more visually appealing figure
+
+```{r}
+as.data.frame(parkinson) %>%
+  mutate(chr = fct_relevel(chr, 
+                           "1", "2", "3", "4", "5", "6", "7",
+                           "8", "9", "10", "11", "12", "13",
+                           "14", "15", "16", "17", "18", "19",
+                           "20", "21", "22", "X")) %>%
+  ggplot( aes(x=chr, y=`Parkinson's disease`, fill=chr)) +
+  geom_bar(stat="identity") +
+  theme_minimal() + theme(legend.position="none") +
+  # scale_fill_discrete() + 
+  scale_fill_viridis(discrete=TRUE, option="magma") +
+  xlab("Chromosome #") +
+  ylab("Number of Loci Associated with Parkinson's Disease") + 
+  labs(title = "Parkinson's Diseases Associated loci based on Chromosome Number") 
+```
