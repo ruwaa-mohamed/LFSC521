@@ -11,6 +11,23 @@ databases. The downloaded data can be found here:
 
 The downloaded file was unzipped to get the CSV file.
 
+Why did I choose this dataset?
+
+Because I want to see if we can drive meaningful claims out of simple
+analysis of SNP/phenotype association data for common photypes/diseases,
+*i.e.* Parkinson’s disease.
+
+Main steps:
+
+1.  import the librarie(s)
+2.  load the data
+3.  View the data and study the structure of the columns.
+4.  Modify whatever needs to be modified for better analysis.
+5.  Group the observations based on chromosome number, phenotype, and/or
+    SNP ID.
+6.  Take a closer look at Parkinson’s disease.
+7.  Plot some meaningful figure(s) for the take-home-msg.
+
 ### Importing the `tidyverse` Library
 
 ``` r
@@ -321,7 +338,25 @@ We can claim that chromosome 6 has a lot of regions that are related to
 Parkinson’s disease. A better study of the phenotype should consider the
 number of cases per each location not only the number of locations.
 
-A more visually appealing figure
+Visually appealing figures:
+
+``` r
+as.data.frame(parkinson) %>%
+  mutate(chr = fct_relevel(chr, 
+                           "1", "2", "3", "4", "5", "6", "7",
+                           "8", "9", "10", "11", "12", "13",
+                           "14", "15", "16", "17", "18", "19",
+                           "20", "21", "22", "X")) %>%
+  ggplot( aes(x=chr, y=`Parkinson's disease`, fill=chr)) +
+  geom_bar(stat="identity") +
+  theme_minimal() + theme(legend.position="none") +
+  # scale_fill_discrete() + 
+  xlab("Chromosome #") +
+  ylab("Number of Loci Associated with Parkinson's Disease") + 
+  labs(title = "Parkinson's Diseases Associated loci based on Chromosome Number") 
+```
+
+![](Module_I_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 as.data.frame(parkinson) %>%
@@ -340,4 +375,4 @@ as.data.frame(parkinson) %>%
   labs(title = "Parkinson's Diseases Associated loci based on Chromosome Number") 
 ```
 
-![](Module_I_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](Module_I_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
